@@ -1,0 +1,70 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>plginstff</title>
+  <meta name="description" content="pluginstff">
+  <meta name="author" content="SitePoint">
+
+  <!--link rel="stylesheet" href="css/sweetalert2.min.css"-->
+  <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+<body>
+
+
+  <div class="card-container oneHand" id="botHand">
+    <p id="bot-money"></p>
+    <p id="bot-figure">Rien</p>
+    <div class="card-container">
+      <ul></ul>
+    </div>
+  </div>
+
+  <div class="card-container" id="middleCards">
+    <div class="card-container">
+      <ul></ul>
+      <p>pot:
+        <span id="pot">0</span>
+      </p>
+      <!--button id="nextTurn">Admin next turn</button-->
+    </div>
+  </div>
+
+  <div class="card-container oneHand" id="myHand">
+    <div id="player-choice-container" class="choices-container">
+      <div data-action="fold" class="player-choice fold">fold</div>
+      <div data-action="check-call" class="player-choice check-call">check - call</div>
+      <div data-action="raise" class="player-choice raise">raise</div>
+    </div>
+    <p id="player-figure">Rien</p>
+    <div class="card-container">
+      <ul></ul>
+    </div>
+    <p id="player-money"></p>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <!--script src="js/sweetalert2.min.js"></script-->
+  <script src="js/deck.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>
