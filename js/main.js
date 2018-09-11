@@ -10,7 +10,7 @@ $(document).ready(function () {
 	});
 	*/
 	$('.player-choice').click(function(el) {
-		if(!areChoicesEnabled) {
+		if(!state.areChoicesEnabled) {
 			return;
 		}
 		disableChoices();
@@ -39,33 +39,36 @@ $(document).ready(function () {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /* * V A R I A B L E S * */
-// flop, turn, river
-var steps = ['preflop', 'flop', 'turn', 'river', 'end'];
-var currentTurnIndex = 0;
 var allDecks = [];
-var myHand = [];
-var botHand = [];
-var sharedHand = [];
-var myHandDOM = document.getElementById('myHand');
-var botHandDOM = document.getElementById('botHand');
-var sharedHandDOM = document.getElementById('middleCards');
-
-var areChoicesEnabled = false;
-var myMoney = 500;
-var botMoney = 500;
-var potMoney = 0;
-var bet1 = 0;
-var bet2 = 0;
-var askForPlayerBet = false;
-var botJustRaised = false;
-var playerHasFolded = false;
-var botHasFolded = false;
-
 var preventInfiniteLoop = 0;
 
 
+/* * better V A R I A B L E S * */
+var me = {};
+me.handData = []; // myHand
+me.handDom = document.getElementById('myHand'); // myHandDOM
+me.money = 500; // myMoney
+me.thisHandBet = 0; // bet1
+me.hasFolded = false; // playerHasFolded
 
 
+var bot = {};
+bot.handData = []; // botHand
+bot.handDom = document.getElementById('myHand');
+bot.money = 500; // bot.money
+bot.thisHandBet = 0; // bet2
+bot.hasFolded = false; // botHasFolded
+bot.justRaised = false;
+
+
+var state = {};
+state.steps = ['preflop', 'flop', 'turn', 'river', 'end']; // steps
+state.currentTurnIndex = 0; // currentTurnIndex
+state.sharedHand = []; // sharedHand
+state.sharedHandDOM = document.getElementById('middleCards'); // sharedHandDOM
+state.areChoicesEnabled = false; // areChoicesEnabled
+state.potMoney = 0; // state.potMoney
+state.askForPlayerBet = false; // state.askForPlayerBet
 
 
 
@@ -110,14 +113,14 @@ function emptyHands() {
 	document.getElementById('myHand').getElementsByTagName('ul')[0].innerHTML = '';
 	document.getElementById('botHand').getElementsByTagName('ul')[0].innerHTML = '';
 
-	myHandDOM = document.getElementById('myHand');
-	botHandDOM = document.getElementById('botHand');
+	me.handDom = document.getElementById('myHand');
+	bot.handDom = document.getElementById('botHand');
 }
 
 
 function emptyDomCards() {
 	document.getElementById('middleCards').getElementsByTagName('ul')[0].innerHTML = '';
-	sharedHandDOM = document.getElementById('middleCards');
+	state.sharedHandDOM = document.getElementById('middleCards');
 }
 
 
@@ -147,11 +150,11 @@ function turnEventsHub(action) {
 		endOfHand();
 		break;
 		case 'check-call':
-		currentTurnIndex++;
+		state.currentTurnIndex++;
 		check();
 		break;
 		case 'raise':
-		currentTurnIndex++;
+		state.currentTurnIndex++;
 		raise();
 		break;
 	}
@@ -163,7 +166,7 @@ function endOfHand() {
 	disableChoices();
 	alert('You folded.');
 	// reset the steps of game
-	currentTurnIndex = 0;
+	state.currentTurnIndex = 0;
 	// NB: ongoing bets are reset in betting process (myTurn() and botTurn());
 	emptyDomCards();
 	newHands();
@@ -202,16 +205,16 @@ function raise() {
 function myTurn(betSettings) {	
 	// while temporary bet + all already bet < p2's bet
 	do {
-		if(botJustRaised) {
-			var msg = 'BOT just raised me for ' + (bet2 - bet1) + '.';
+		if(bot.justRaised) {
+			var msg = 'BOT just raised me for ' + (bot.thisHandBet - me.thisHandBet) + '.';
 			msg += '\n(Cancel to fold)';
-			msg += '\n\tMy bet ? ('+(bet2 - bet1)+' to call)';
+			msg += '\n\tMy bet ? ('+(bot.thisHandBet - me.thisHandBet)+' to call)';
 			betSettings.temp1 = prompt(msg);
 		}
-		else if(askForPlayerBet) {
+		else if(state.askForPlayerBet) {
 			var msg = 'Combien ?';
 			betSettings.temp1 = prompt(msg);
-			askForPlayerBet = false;
+			state.askForPlayerBet = false;
 		}
 		else {
 			betSettings.temp1 = betSettings.myAmount;
@@ -219,31 +222,31 @@ function myTurn(betSettings) {
 
 		// if cancel clicked
 		if (betSettings.temp1 == null) {
-			// no need to touch myMoney, already substracted on last bet
+			// no need to touch me.money, already substracted on last bet
 			// adding current bets (pot) to BOT money
-			refreshMoney('bot', potMoney);
-			refreshMoney('pot', (-1*potMoney));
-			playerHasFolded = true;
+			refreshMoney('bot', state.potMoney);
+			refreshMoney('pot', (-1*state.potMoney));
+			me.hasFolded = true;
 			endOfHand();
 			return;
 		}
 		// if letters or whatnot
 		if (isNaN(parseInt(betSettings.temp1))) {
 			alert('not a valid bet');
-			askForPlayerBet = true;
+			state.askForPlayerBet = true;
 		}
 		// if not enough to call
-		if ((parseInt(bet1) + parseInt(betSettings.temp1)) < parseInt(bet2)) {
+		if ((parseInt(me.thisHandBet) + parseInt(betSettings.temp1)) < parseInt(bot.thisHandBet)) {
 			alert('not enough');
 			preventInfiniteLoop++;
 			if(preventInfiniteLoop == 3) return;
 		}			
 		// keep asking until betting or cancelling
-	} while (isNaN(parseInt(betSettings.temp1)) || (parseInt(bet1) + parseInt(betSettings.temp1)) < parseInt(bet2));
+	} while (isNaN(parseInt(betSettings.temp1)) || (parseInt(me.thisHandBet) + parseInt(betSettings.temp1)) < parseInt(bot.thisHandBet));
 
-	botJustRaised = false;
+	bot.justRaised = false;
 	// assign new bet amount
-	bet1 += parseInt(betSettings.temp1);
+	me.thisHandBet += parseInt(betSettings.temp1);
 	refreshMoney('me', (-1*betSettings.temp1));
 	refreshMoney('pot', betSettings.temp1);
 	return betSettings;
@@ -265,26 +268,26 @@ function myTurn(betSettings) {
 
 function botTurn(betSettings) {
 	// if p1 bet more than p2 OR bet 0 (check)
-	if (bet1 > bet2 || betSettings.temp1 == 0) {
+	if (me.thisHandBet > bot.thisHandBet || betSettings.temp1 == 0) {
 		betSettings.temp2 = getRandomBetting(parseInt(betSettings.temp1));
 		// if cancel clicked
 		if (betSettings.temp2 == null) {
-			alert('Bot folded.\nYou win: '+potMoney+'.');
+			alert('Bot folded.\nYou win: '+state.potMoney+'.');
 			// adding current bets to my money
-			// no need to touch botMoney, already substracted on last bet
-			refreshMoney('me', potMoney);
-			refreshMoney('pot', (-1*potMoney));
-			botHasFolded = true;
+			// no need to touch bot.money, already substracted on last bet
+			refreshMoney('me', state.potMoney);
+			refreshMoney('pot', (-1*state.potMoney));
+			bot.hasFolded = true;
 			endOfHand();
 			return;
 		}
 
-		if((bet2 + parseInt(betSettings.temp2)) > parseInt(bet1)) {			
-			botJustRaised = true;
+		if((bot.thisHandBet + parseInt(betSettings.temp2)) > parseInt(me.thisHandBet)) {			
+			bot.justRaised = true;
 		}
 
 		// assign new bet amount
-		bet2 += parseInt(betSettings.temp2);
+		bot.thisHandBet += parseInt(betSettings.temp2);
 		refreshMoney('bot', (-1*betSettings.temp2));
 		refreshMoney('pot', betSettings.temp2);
 		return betSettings;
@@ -308,8 +311,8 @@ function botTurn(betSettings) {
 
 function manageBetIncrements(myAmount) {
 	var betSettings = {
-		bet1_svg:  bet1,
-		bet2_svg:  bet2,
+		bet1_svg:  me.thisHandBet,
+		bet2_svg:  bot.thisHandBet,
 		temp1: -1,
 		temp2: -1,
 		myAmount: myAmount
@@ -322,13 +325,13 @@ function manageBetIncrements(myAmount) {
 			return;
 		}
 		betSettings = botTurn(betSettings);			
-	} while (bet1 != bet2);
+	} while (me.thisHandBet != bot.thisHandBet);
 	nextTurn();
 	
 }
 
 function nextTurn() {
-	var turnName = steps[currentTurnIndex];
+	var turnName = state.steps[state.currentTurnIndex];
 	switch (turnName) {
 		case 'preflop':
 		
@@ -381,12 +384,12 @@ function disableNextTurnBtn() {
 
 function enableChoices() {
 	$('#player-choice-container').addClass('enabled');
-	areChoicesEnabled = true;
+	state.areChoicesEnabled = true;
 }
 function disableChoices() {
 	
 	$('#player-choice-container').removeClass('enabled');
-	areChoicesEnabled = false;
+	state.areChoicesEnabled = false;
 }
 
 
@@ -403,7 +406,7 @@ function getRandomBetting(temp1) {
 
 	// is checking - calling (70%)
 	if (isBettingAtAll < 0.7) {
-		amount = bet1 - bet2;
+		amount = me.thisHandBet - bot.thisHandBet;
 		if(amount == 0) {
 			alert('Bot checks');
 		} else {			
@@ -418,7 +421,7 @@ function getRandomBetting(temp1) {
 			alert('Bot bets '+amount+'.');
 			
 		} else { // raising
-			botJustRaised = true;
+			bot.justRaised = true;
 			amount = temp1 + getRandomInt(temp1*1.2, temp1*2);
 			alert('Bot raises: '+amount+'.');
 			
@@ -454,23 +457,23 @@ function refreshPotDisplay(potAmount){
 }
 
 function initMoney() {
-	document.getElementById('player-money').textContent = parseInt(myMoney);
-	document.getElementById('bot-money').textContent = parseInt(botMoney);
+	document.getElementById('player-money').textContent = parseInt(me.money);
+	document.getElementById('bot-money').textContent = parseInt(bot.money);
 }
 function refreshMoney(whose, amoutToAdd) {
 	var target;
 	switch(whose) {
 		case 'me':
 		target = document.getElementById('player-money');
-		myMoney += parseInt(amoutToAdd);
+		me.money += parseInt(amoutToAdd);
 		break;
 		case 'bot':
 		target = document.getElementById('bot-money');
-		botMoney += parseInt(amoutToAdd);
+		bot.money += parseInt(amoutToAdd);
 		break;
 		case 'pot':
 		target = document.getElementById('pot');
-		potMoney += parseInt(amoutToAdd);
+		state.potMoney += parseInt(amoutToAdd);
 		break;
 	}
 	var currentMoneyAmount = target.textContent;
@@ -491,11 +494,11 @@ function detectFigures(who) {
 	var whereToWrite;
 	switch (who) {
 		case 'me':
-		cardsToCheck = myHand.concat(sharedHand);
+		cardsToCheck = me.handData.concat(state.sharedHand);
 		whereToWrite = document.getElementById('player-figure');
 		break;
 		case 'bot':
-		cardsToCheck = botHand.concat(sharedHand);
+		cardsToCheck = bot.handData.concat(state.sharedHand);
 		whereToWrite = document.getElementById('bot-figure');
 		break;
 	}
@@ -701,16 +704,16 @@ function addCardsInHand(cards, who) {
 	var theHandData;
 	switch (who) {
 		case 'me':
-		theHandData = myHand
-		theHandDom = myHandDOM;
+		theHandData = me.handData
+		theHandDom = me.handDom;
 		break;
 		case 'bot':
-		theHandData = botHand
-		theHandDom = botHandDOM;
+		theHandData = bot.handData
+		theHandDom = bot.handDom;
 		break;
 		case 'shared':
-		theHandData = sharedHand
-		theHandDom = sharedHandDOM;
+		theHandData = state.sharedHand
+		theHandDom = state.sharedHandDOM;
 		break;
 	}
 	for (var i = 0; i < cards.length; i++) {
@@ -723,18 +726,18 @@ function addCardsInHand(cards, who) {
 function displayInConsole() {
 
 	var botHandtodisplay = '';
-	for (var i = 0; i < botHand.length; i++) {
-		botHandtodisplay += botHand[i].value + botHand[i].suit + ', ';
+	for (var i = 0; i < bot.handData.length; i++) {
+		botHandtodisplay += bot.handData[i].value + bot.handData[i].suit + ', ';
 	}
 
 	var sharedHandtodisplay = '';
-	for (var i = 0; i < sharedHand.length; i++) {
-		sharedHandtodisplay += sharedHand[i].value + sharedHand[i].suit + ', ';
+	for (var i = 0; i < state.sharedHand.length; i++) {
+		sharedHandtodisplay += state.sharedHand[i].value + state.sharedHand[i].suit + ', ';
 	}
 
 	var myHandtodisplay = '';
-	for (var i = 0; i < myHand.length; i++) {
-		myHandtodisplay += myHand[i].value + myHand[i].suit + ', ';
+	for (var i = 0; i < me.handData.length; i++) {
+		myHandtodisplay += me.handData[i].value + me.handData[i].suit + ', ';
 	}
 
 }
