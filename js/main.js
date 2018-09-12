@@ -145,7 +145,8 @@ function turnEventsHub(action) {
 function endOfHand() {
 	
 	disableChoices();
-	alert('You folded.');
+	// TODO ce qu'il faut quoi
+	alert('End of Hand');
 	// reset the steps of game
 	state.currentTurnIndex = 0;
 	// NB: ongoing bets are reset in betting process (myTurn() and botTurn());
@@ -156,14 +157,12 @@ function endOfHand() {
 
 }
 
-function check() {
-	
+function check() {	
 	alert('You check');
 	manageBetIncrements(0);
 }
 
-function raise() {
-	
+function raise() {	
 	var myBet = prompt('my bet ?');
 	manageBetIncrements(myBet);
 
@@ -232,8 +231,6 @@ function myTurn(betSettings) {
 	refreshMoney('pot', betSettings.temp1);
 	return betSettings;
 }
-
-
 
 
 
@@ -331,7 +328,7 @@ function nextTurn() {
 		detectEverybody();
 		setTimeout(function() {
 			enableChoices();	
-		}, 150);
+		}, 550);
 
 		break;
 
@@ -388,6 +385,7 @@ function getRandomBetting(temp1) {
 	
 
 	// is checking - calling (70%)
+
 	if (isBettingAtAll < 0.7) {
 		amount = me.thisHandBet - bot.thisHandBet;
 		if(amount == 0) {
@@ -398,20 +396,20 @@ function getRandomBetting(temp1) {
 		
 	}
 	// is raising - betting (20%)
-	else if(isBettingAtAll > 0.7 && isBettingAtAll < 0.9) {
+	else if(isBettingAtAll >= 0.7 && isBettingAtAll <= 0.9) {
 		if (temp1 == 0) { // betting
 			amount = getRandomInt(10, 50);
 			alert('Bot bets '+amount+'.');
 			
 		} else { // raising
 			bot.justRaised = true;
-			amount = temp1 + getRandomInt(temp1*1.2, temp1*2);
+			amount = temp1 + getRandomInt(temp1*2, bot.money);
 			alert('Bot raises: '+amount+'.');
 			
 		}
 	}
 	// is folding (10%)
-	if(amount == null) {		
+	if(isBettingAtAll > 0.9) {		
 		
 	}
 	return amount;
@@ -489,6 +487,7 @@ function detectFigures(who) {
 	// NB: map's key format is Integer
 	//	11: J, 12: Q, 13: K, 14: A 
 	var nbCardsByValue = getQteByValue(cardsToCheck);
+	console.log(nbCardsByValue);
 	var nbCardsByColor = getQteByColor(cardsToCheck);
 
 	// special case where 'case 2' is true twice (2 pairs)
@@ -633,11 +632,12 @@ function checkForStraightAndStraightFlush(cards) {
 	}
 
 
+	var consecutiveIncrements = 0;
 	var consecutiveColors = 0;
+
 	var isStraightFlush = false;
 	var hasStraight = false;
 	var limit = adjustedCards.length - 1;
-	var consecutiveIncrements = 0;
 	for (var i = 0; i < limit; i++) {
 		var diff = adjustedCards[i + 1].value - adjustedCards[i].value; // should be 1 OR special verification in case of Ace
 		if (diff == 1 || (adjustedCards[i + 1].value == 2 && adjustedCards[i].value == 14)) {
@@ -646,6 +646,8 @@ function checkForStraightAndStraightFlush(cards) {
 				consecutiveColors++;
 			}
 		}
+
+
 		else {
 			consecutiveIncrements = 0;
 		}
