@@ -3,8 +3,8 @@ $(document).ready(function () {
 
 	init();
 	nextTurn();
-/*
-//admin next turn
+	/*
+	//admin next turn
 	document.getElementById('nextTurn').addEventListener('click', function () {
 		nextTurn();
 	});
@@ -14,10 +14,11 @@ $(document).ready(function () {
 			return;
 		}
 		disableChoices();
+
 		var action = this.dataset.action;
 		setTimeout(function() {
 			turnEventsHub(action);	
-		}, 500);
+		}, 100);
 		
 	});
 
@@ -42,33 +43,31 @@ $(document).ready(function () {
 var allDecks = [];
 var preventInfiniteLoop = 0;
 
-
-/* * better V A R I A B L E S * */
 var me = {};
-me.handData = []; // myHand
-me.handDom = document.getElementById('myHand'); // myHandDOM
-me.money = 500; // myMoney
-me.thisHandBet = 0; // bet1
-me.hasFolded = false; // playerHasFolded
+me.handData = [];
+me.handDom = document.getElementById('myHand');
+me.money = 500;
+me.thisHandBet = 0;
+me.hasFolded = false;
 
 
 var bot = {};
-bot.handData = []; // botHand
+bot.handData = [];
 bot.handDom = document.getElementById('myHand');
-bot.money = 500; // bot.money
-bot.thisHandBet = 0; // bet2
-bot.hasFolded = false; // botHasFolded
+bot.money = 500;
+bot.thisHandBet = 0;
+bot.hasFolded = false;
 bot.justRaised = false;
 
 
 var state = {};
-state.steps = ['preflop', 'flop', 'turn', 'river', 'end']; // steps
-state.currentTurnIndex = 0; // currentTurnIndex
+state.steps = ['preflop', 'flop', 'turn', 'river', 'end'];
+state.currentTurnIndex = 0;
 state.sharedHand = []; // sharedHand
-state.sharedHandDOM = document.getElementById('middleCards'); // sharedHandDOM
+state.sharedHandDOM = document.getElementById('middleCards');
 state.areChoicesEnabled = false; // areChoicesEnabled
-state.potMoney = 0; // state.potMoney
-state.askForPlayerBet = false; // state.askForPlayerBet
+state.potMoney = 0;
+state.askForPlayerBet = false;
 
 
 
@@ -89,10 +88,10 @@ function init() {
 	// TODO set custom amounts?
 	initMoney();
 
-	// creating the playing deck
-	constructPlayingDeck(3);
+	// creating the playing deck (with that many decks)
+	constructPlayingDeck(1);
 
-	// deal the first crads
+	// deal the first cards
 	newHands();
 
 
@@ -104,24 +103,6 @@ function constructPlayingDeck(decksNb) {
 }
 
 
-function newHands() {
-	emptyHands();
-	addCardsInHand(getCardsFromDeck(2), 'me');
-	addCardsInHand(getCardsFromDeck(2), 'bot');
-}
-function emptyHands() {
-	document.getElementById('myHand').getElementsByTagName('ul')[0].innerHTML = '';
-	document.getElementById('botHand').getElementsByTagName('ul')[0].innerHTML = '';
-
-	me.handDom = document.getElementById('myHand');
-	bot.handDom = document.getElementById('botHand');
-}
-
-
-function emptyDomCards() {
-	document.getElementById('middleCards').getElementsByTagName('ul')[0].innerHTML = '';
-	state.sharedHandDOM = document.getElementById('middleCards');
-}
 
 
 
@@ -318,16 +299,18 @@ function manageBetIncrements(myAmount) {
 		myAmount: myAmount
 	}
 
-	do {
+	do { // while bet amounts aren't the same
 		betSettings = myTurn(betSettings);
+
 		// if player folded
 		if(betSettings == undefined) {			
 			return;
 		}
+
 		betSettings = botTurn(betSettings);			
 	} while (me.thisHandBet != bot.thisHandBet);
-	nextTurn();
-	
+
+	nextTurn();	
 }
 
 function nextTurn() {
@@ -338,37 +321,37 @@ function nextTurn() {
 		detectEverybody();
 		setTimeout(function() {
 			enableChoices();	
-		}, 750);
+		}, 150);
 
 		break;
 
 		case 'flop':
-		
+
 		addCardsInHand(getCardsFromDeck(3), 'shared');
 		detectEverybody();
 		setTimeout(function() {
 			enableChoices();	
-		}, 750);
+		}, 150);
 
 		break;
 
 		case 'turn':
-		
+
 		addCardsInHand(getCardsFromDeck(1), 'shared');
 		detectEverybody();
 		setTimeout(function() {
 			enableChoices();	
-		}, 750);
+		}, 150);
 
 		break;
 
-		case 'river':
+		case 'river': // same as turn
 		
 		addCardsInHand(getCardsFromDeck(1), 'shared');
 		detectEverybody();
 		setTimeout(function() {
 			enableChoices();	
-		}, 750);
+		}, 150);
 		break;	
 
 		case 'end':
@@ -508,7 +491,7 @@ function detectFigures(who) {
 	var nbCardsByValue = getQteByValue(cardsToCheck);
 	var nbCardsByColor = getQteByColor(cardsToCheck);
 
-	// special case where 'case 2' is true twice 
+	// special case where 'case 2' is true twice (2 pairs)
 	var nbPairs = 0;
 	var fiveOfAKind = false;
 	var fourOfAKind = false;
@@ -722,6 +705,26 @@ function addCardsInHand(cards, who) {
 		theHandDom.getElementsByTagName('ul')[0].appendChild(oneCard);
 	}
 }
+
+
+function newHands() {
+	emptyHands();
+	addCardsInHand(getCardsFromDeck(2), 'me');
+	addCardsInHand(getCardsFromDeck(2), 'bot');
+}
+
+function emptyHands() {
+	document.getElementById('myHand').getElementsByTagName('ul')[0].innerHTML = '';
+	document.getElementById('botHand').getElementsByTagName('ul')[0].innerHTML = '';
+	me.handDom = document.getElementById('myHand');
+	bot.handDom = document.getElementById('botHand');
+}
+function emptyDomCards() {
+	document.getElementById('middleCards').getElementsByTagName('ul')[0].innerHTML = '';
+	state.sharedHandDOM = document.getElementById('middleCards');
+}
+
+
 
 function displayInConsole() {
 
